@@ -129,14 +129,15 @@
 
     BumperCar.prototype = {
 	    engineStrength  : 50,
+	    steeringStrength: 10,
 	    dims            : {width:10, height:20},
 
 	    turnRight   : function() {
-
+			this.body.ApplyTorque(this.steeringStrength);
 	    },
 
 	    turnLeft    : function() {
-
+		    this.body.ApplyTorque( - this.steeringStrength);
 	    },
 
 	    getCurrentDirection         : function(optVec2) {
@@ -208,9 +209,7 @@
 		    var _qt = qt;
 		    pid = setInterval(function() {
 			    _scope.accelerate();
-			    var vLat = _scope.getForwardVelocity();
-			    vLat.Normalize();
-			    console.log("vLat= (%s,%s)", vLat.x, vLat.y);
+			    _scope.turnLeft();
 			    if (_qt-- <= 0) clearInterval(pid);
 		    }, 1/60);
 	    },
