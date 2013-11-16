@@ -1,17 +1,22 @@
 (function() {
 	//http://www.box2d.org/manual.html
-    var b2World = Box2D.Dynamics.b2World;
-    var b2Vec2 = Box2D.Common.Math.b2Vec2;
-    var b2AABB = Box2D.Collision.b2AABB;
-    var b2BodyDef = Box2D.Dynamics.b2BodyDef;
-    var b2Body = Box2D.Dynamics.b2Body;
-    var b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
-    var b2Fixture = Box2D.Dynamics.b2Fixture;
-    var b2MassData = Box2D.Collision.Shapes.b2MassData;
-    var b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
-    var b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
-    var b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
-    var b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
+    var b2World         = Box2D.Dynamics.b2World;
+    var b2Vec2          = Box2D.Common.Math.b2Vec2;
+    var b2AABB          = Box2D.Collision.b2AABB;
+    var b2BodyDef       = Box2D.Dynamics.b2BodyDef;
+    var b2Body          = Box2D.Dynamics.b2Body;
+    var b2FixtureDef    = Box2D.Dynamics.b2FixtureDef;
+    var b2Fixture       = Box2D.Dynamics.b2Fixture;
+    var b2MassData      = Box2D.Collision.Shapes.b2MassData;
+    var b2PolygonShape  = Box2D.Collision.Shapes.b2PolygonShape;
+    var b2CircleShape   = Box2D.Collision.Shapes.b2CircleShape;
+    var b2DebugDraw     = Box2D.Dynamics.b2DebugDraw;
+    var b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef;
+	// Fonction du produit scalaire
+	Box2D.Common.Math.b2Dot = function(a, b) { return (a.x * b.x) + (a.y * b.y); };
+	var b2Dot           = Box2D.Common.Math.b2Dot;
+
+
 
     BumperGame = function() {
         this.world      = null;
@@ -96,7 +101,7 @@
         this.fixture    = null;
 	    this.body       = null;
 	    var dims = this.dims;
-	    this.enginePosition = b2Vec2.Make(3, dims.height/2);
+	    this.enginePosition = b2Vec2.Make(0, dims.height/2);
 
 	    this.fixtureDef = (function(){
 	        var result      = new b2FixtureDef();
@@ -123,27 +128,15 @@
     };
 
     BumperCar.prototype = {
-	    velocityCap     : 300,
 	    engineStrength  : 50,
-	    maxSteering     : Math.PI/4, // 45°
-	    currentSteering : 0,
 	    dims            : {width:10, height:20},
-	    enginePosition  : b2Vec2.Make(),
 
 	    turnRight   : function() {
-		    this.currentSteering    = this.maxSteering;
+
 	    },
 
 	    turnLeft    : function() {
-		    this.currentSteering    = - this.maxSteering;
-	    },
 
-	    accelerate  : function() {
-		    /**Cette méthode applique une force colineairement à la direction
-		     * voulue par le joueur. Cette force s'additionne à celles déjà
-		     * existantes ce qui provoque l'acceleration
-		     */
-		    this.body.ApplyForce(this.buildForceEngine(), this.body.GetWorldPoint(this.enginePosition));
 	    },
 
 	    getCurrentDirection         : function(optVec2) {
@@ -159,40 +152,77 @@
 		    return result;
 	    },
 
-	    _flyweigthForceEngineVector : null, // https://en.wikipedia.org/wiki/Flyweight_pattern
-	    buildForceEngine   : function() {
-		    /**Cette méthode construit le vecteur de la force produite par
-		     * le moteur s'il était sollicité.
-		     * @return {b2Vec2}
-		     */
-		    this.getCurrentDirection(this._flyweigthForceEngineVector);
-		    this._flyweigthForceEngineVector.Multiply(this.engineStrength); // Ajout de la force moteur
-		    return this._flyweigthForceEngineVector;
+	    getForwardVelocity          : function() {
+		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) );
+		    currentForwardNormal.Multiply(b2Dot( currentForwardNormal, this.body.GetLinearVelocity() ));
+		    return currentForwardNormal;
 	    },
 
-	    _flyweigthForceResistanceVector :   null,
-	    getCurrentForceResistance: function() {
-		    /**Cette méthode fournit le vecteur de la force de resistance
-		     * qui s'applique actuellement à la voiture
-		     * @return {b2Vec2}
+	    getLateralVelocity          : function() {
+		    var currentRightNormal = this.body.GetWorldVector( b2Vec2.Make(1,0) ); // Vecteur normal au vecteur de déplacement latéral
+		    currentRightNormal.Multiply(b2Dot( currentRightNormal, this.body.GetLinearVelocity() ));
+		    return currentRightNormal;
+		},
+
+	    accelerate  : function() {
+		    /**Applique une force d'intensité egale à la constante engineStrength et
+		     * vers l'avant du vehicule. La force s'ajoute aux force deja
+		     * en presence. La vitesse limite est t'atteinte lorsque la force
+		     * d'acceleration devient au moins egale au frein moteur
 		     */
-		    var resistanceIntensity = this.body.GetLinearVelocity().Length();
-		    this.getCurrentDirection(this._flyweigthForceResistanceVector);
-		    this._flyweigthForceResistanceVector.Multiply( - resistanceIntensity);
-		    return this._flyweigthForceResistanceVector;
+		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) ); // Le vec de  ou va la voiture
+		    currentForwardNormal.Multiply(this.engineStrength); // Ajout de la force motrice
+		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
+	    },
+
+	    updateFriction                  : function() {
+		    /**Applique la force de friction latéral engendrée par les pneux. En
+		     * effet, d'avant en arriere les roues roullent sans resistance mais
+		     * sur le côté les pneux resistent via les frottements.
+		     */
+			var frictionForce = this.getLateralVelocity();
+		    frictionForce.Multiply( - this.body.GetMass());
+		    this.body.ApplyImpulse(frictionForce, this.body.GetWorldCenter() );
+		},
+
+	    updateEngineBracking            : function() {
+		    /**Applique la force du frein moteur. Cette force doit toujours être
+		     * proportionnel à la vitesse avant-arriere du vehicule. (Les forces
+		     * latérales sont gérées par la friction des pneus)
+		     */
+		    var resistanceIntensity = this.getForwardVelocity().Length();
+		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) );
+		    currentForwardNormal.Multiply( - resistanceIntensity);
+		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter());
 	    },
 
 	    boost       : function() {
 		    this.body.ApplyImpulse(new b2Vec2(0,3), this.body.GetWorldPoint(this.enginePosition));
 	    },
-		debugCounter    : 500,
+
+	    debugRunning    : function(qt) {
+		    /**Genere une acceleration prolongée
+		     */
+		    var pid = -1;
+		    var _scope = this;
+		    var _qt = qt;
+		    pid = setInterval(function() {
+			    _scope.accelerate();
+			    var vLat = _scope.getForwardVelocity();
+			    vLat.Normalize();
+			    console.log("vLat= (%s,%s)", vLat.x, vLat.y);
+			    if (_qt-- <= 0) clearInterval(pid);
+		    }, 1/60);
+	    },
+
 	    onUpdate    : function() {
 		    /**Cette méthode est appelée à chaque cycle de calcul physique par BumperGame
 		     * On réalise dans cette méthode toutes les opérations physique systématiquement
 		     * subit par la voiture. Par exemple, la force de résistance
 		     */
-		    this.body.ApplyForce(this.getCurrentForceResistance(), this.body.GetWorldPoint(this.enginePosition));
-		    if (this.debugCounter-- > 0) this.accelerate();
+		    //this.body.ApplyForce(this.getCurrentForceResistance(), this.body.GetWorldPoint(this.enginePosition));
+		    this.updateFriction();
+		    this.updateEngineBracking();
 	    }
     };
 })();
