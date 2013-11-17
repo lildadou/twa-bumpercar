@@ -15,11 +15,10 @@
     <script>
         var canvas = document.getElementById("bumperCanvas");
         var canvasCtx = canvas.getContext('2d');
-        bumperGame = new BumperGame();
-        bumperGame.initializeWorld(canvasCtx);
+        bumperGame = new BumperGame();  bumperGame.initializeWorld(canvasCtx);
+        car = new BumperCar();          bumperGame.addBumperCar(car);
+        ctrl = new PlayerCarControler();ctrl.setBumperCar(car);     ctrl.attachEventListeners(document);
 
-        var car = new BumperCar();
-        bumperGame.addBumperCar(car);
         bumperGame.start();
     </script>
     <script>

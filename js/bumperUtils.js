@@ -219,9 +219,90 @@
 		     * On réalise dans cette méthode toutes les opérations physique systématiquement
 		     * subit par la voiture. Par exemple, la force de résistance
 		     */
-		    //this.body.ApplyForce(this.getCurrentForceResistance(), this.body.GetWorldPoint(this.enginePosition));
 		    this.updateFriction();
 		    this.updateEngineBracking();
 	    }
     };
+
+	/**Cette classe permet de controler localement un BumperCar
+	 * @param data {Object}
+	 * @param data.car {BumperCar} La voiture du joueur
+	 * @constructor
+	 */
+
+	PlayerCarControler = function(data) {
+		this.status = {
+			isAccelerate    : false,
+			isBraking       : false,
+			isRightSteer    : false,
+			isLeftSteer     : false
+		};
+
+		// Les listeners sont initialisés mais pas attaché (cf. attachEventListeners)
+		var _scope = this;
+		this.onKeyDownListener = function(downEvent) {
+			console.log(downEvent.keyCode);
+			switch (downEvent.keyCode) {
+				case _scope.keyMap.accelerateKey:   _scope.status.isAccelerate  = true; break;
+				case _scope.keyMap.brakingKey:      _scope.status.isBraking     = true; break;
+				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = true; break;
+				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = true; break;
+			}
+		};
+		this.onKeyUpListener = function(downEvent) {
+			switch (downEvent.keyCode) {
+				case _scope.keyMap.accelerateKey:   _scope.status.isAccelerate  = false; break;
+				case _scope.keyMap.brakingKey:      _scope.status.isBraking     = false; break;
+				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = false; break;
+				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = false; break;
+			}
+		};
+	};
+
+	PlayerCarControler.prototype = {
+		status          : null,// Controles activés
+		bumperCar       : null,
+		bumperOnUpdate  : null, // La fonction onUpdate de la BumperCar
+
+		keyMap          : {
+			accelerateKey   : 38,  // Accelerateur
+			brakingKey      : 40,  // Frein
+			rightSteer      : 39,
+			leftSteer       : 37
+		},
+		onKeyDownListener   : null,
+		onKeyUpListener     : null,
+
+		/**Binde les evenements clavier au controleur.
+		 * @param hDoc {HTMLDocument} La page où écouter les événements
+		 */
+		attachEventListeners    : function(hDoc) {
+			hDoc.addEventListener('keydown', this.onKeyDownListener);
+			hDoc.addEventListener('keyup', this.onKeyUpListener);
+		},
+
+		detachEventListeners    : function(hDoc) {
+			hDoc.removeEventListener('keydown', this.onKeyDownListener);
+			hDoc.removeEventListener('keyup', this.onKeyUpListener);
+		},
+
+		setBumperCar        : function(car) {
+			// On va 'hooker' ou 'surcharger' le onUpdate de la BumperCar
+			// pour appliquer les operations demandes par le joueur
+
+			this.bumperCar  = car;
+			this.bumperOnUpdate = car.onUpdate;
+			var _ctrl = this;
+			car.onUpdate = function() { // on change le onUpdate de la BumperCar
+				_ctrl.onUpdate();       // quand BumperCar.onUpdate est appellé, on lance onUpdate du controlleur
+				_ctrl.bumperOnUpdate.apply(car); // et ensuite on appelle le onUpdate de la voiture
+			};
+		},
+
+		onUpdate            : function() {
+			if (this.status.isAccelerate) this.bumperCar.accelerate();
+			if (this.status.isRightSteer) this.bumperCar.turnRight();
+			if (this.status.isLeftSteer) this.bumperCar.turnLeft();
+		}
+	};
 })();
