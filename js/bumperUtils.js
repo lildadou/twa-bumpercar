@@ -52,6 +52,10 @@
             this.world.SetDebugDraw(debugDraw);
         },
 
+	    getViewSize     : function() {
+		    return b2Vec2.Make(this.rendering.canvas.width, this.rendering.canvas.height);
+	    },
+
 	    /**Ajoute une auto-tamponneuse à l'univers de jeu
 	     * @param {BumperCar} bumperCar
 	     */
@@ -68,6 +72,14 @@
 		    bumperCar.body.GetMassData(massData);
 			massData.I  = 10;
 		    bumperCar.body.SetMassData(massData);
+
+		    // On positionne la voiture
+		    var worldSize   = this.getViewSize();
+		    console.log(b2Vec2.Make(Math.random()*worldSize.y));
+		    bumperCar.body.SetPositionAndAngle(b2Vec2.Make(
+			    Math.random()*worldSize.x,
+				Math.random()*worldSize.y),
+		    Math.random()*Math.PI*2);
 	    },
 
 	    start           : function() {
