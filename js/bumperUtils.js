@@ -225,12 +225,10 @@
     };
 
 	/**Cette classe permet de controler localement un BumperCar
-	 * @param data {Object}
-	 * @param data.car {BumperCar} La voiture du joueur
 	 * @constructor
 	 */
 
-	PlayerCarControler = function(data) {
+	PlayerCarControler = function() {
 		this.status = {
 			isAccelerate    : false,
 			isBraking       : false,
@@ -286,6 +284,9 @@
 			hDoc.removeEventListener('keyup', this.onKeyUpListener);
 		},
 
+		/**Associe une voiture au controleur
+		 * @param {BumperCar} car
+		 */
 		setBumperCar        : function(car) {
 			// On va 'hooker' ou 'surcharger' le onUpdate de la BumperCar
 			// pour appliquer les operations demandes par le joueur
