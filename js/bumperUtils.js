@@ -239,7 +239,6 @@
 		// Les listeners sont initialisés mais pas attaché (cf. attachEventListeners)
 		var _scope = this;
 		this.onKeyDownListener = function(downEvent) {
-			console.log(downEvent.keyCode);
 			switch (downEvent.keyCode) {
 				case _scope.keyMap.accelerateKey:   _scope.status.isAccelerate  = true; break;
 				case _scope.keyMap.brakingKey:      _scope.status.isBraking     = true; break;
