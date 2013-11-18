@@ -141,7 +141,7 @@
 
     BumperCar.prototype = {
 	    engineStrength  : 50,
-	    steeringStrength: 10,
+	    steeringStrength: 15,
 	    dims            : {width:10, height:20},
 
 	    turnRight   : function() {
