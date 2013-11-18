@@ -16,8 +16,16 @@
         var canvas = document.getElementById("bumperCanvas");
         var canvasCtx = canvas.getContext('2d');
         bumperGame = new BumperGame();  bumperGame.initializeWorld(canvasCtx);
-        car = new BumperCar();          bumperGame.addBumperCar(car);
-        ctrl = new PlayerCarControler();ctrl.setBumperCar(car);     ctrl.attachEventListeners(document);
+        playerCar = new BumperCar();    bumperGame.addBumperCar(playerCar);
+        ctrl = new PlayerCarControler();ctrl.setBumperCar(playerCar);     ctrl.attachEventListeners(document);
+
+        // Une voiture de test
+        crashCar = new BumperCar();
+        bumperGame.addBumperCar(crashCar);
+        puppy = new PlayerCarControler();
+        puppy.setBumperCar(crashCar);
+        puppy.status.isAccelerate = true;
+        puppy.status.isLeftSteer = true;
 
         bumperGame.start();
     </script>
