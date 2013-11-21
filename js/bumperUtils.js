@@ -133,7 +133,7 @@
 	        result.type         = b2Body.b2_dynamicBody; // Objet mouvant
 	        result.density      = 10.0;  // Densité utilisé dans le calcul de la masse
 	        result.restitution  = 0.2;  // Force restituée lors d'une collision
-	        //result.linearDamping= 3;   // Puissance du frein moteur
+	        result.linearDamping= 3;   // Puissance du frein moteur
 	        result.angularDamping= 3;  // Adherence des pneus (resistance au tete à queue)
 	        return result;
         })();
@@ -185,6 +185,12 @@
 		     */
 		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) ); // Le vec de  ou va la voiture
 		    currentForwardNormal.Multiply(this.engineStrength); // Ajout de la force motrice
+		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
+	    },
+
+	    backing  : function() {
+		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) ); // Le vec de  ou va la voiture
+		    currentForwardNormal.Multiply(-this.engineStrength); // Ajout de la force motrice
 		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
 	    },
 
@@ -320,6 +326,7 @@
 			if (this.status.isAccelerate) this.bumperCar.accelerate();
 			if (this.status.isRightSteer) this.bumperCar.turnRight();
 			if (this.status.isLeftSteer) this.bumperCar.turnLeft();
+			if (this.status.isBraking) this.bumperCar.backing();
 		}
 	};
 })();
