@@ -190,7 +190,7 @@
 
 	    backing  : function() {
 		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) ); // Le vec de  ou va la voiture
-		    currentForwardNormal.Multiply(-this.engineStrength); // Ajout de la force motrice
+		    currentForwardNormal.Multiply(-this.engineStrength * 0.1); // Ajout de la force motrice
 		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
 	    },
 
