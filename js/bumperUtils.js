@@ -140,9 +140,9 @@
     };
 
     BumperCar.prototype = {
-	    engineStrength  : 50,
-	    steeringStrength: 15,
-	    dims            : {width:10, height:20},
+	    engineStrength  : 1500,
+	    steeringStrength: 150,
+	    dims            : {width:10, height:15},
 
 	    turnRight   : function() {
 			this.body.ApplyTorque(this.steeringStrength);
@@ -188,13 +188,18 @@
 		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
 	    },
 
-	    updateFriction                  : function() {
+	    updateFriction : function() {
 		    /**Applique la force de friction latéral engendrée par les pneux. En
 		     * effet, d'avant en arriere les roues roullent sans resistance mais
 		     * sur le côté les pneux resistent via les frottements.
 		     */
 			var frictionForce = this.getLateralVelocity();
-		    frictionForce.Multiply( - this.body.GetMass());
+		    frictionForce.Multiply( - this.body.GetMass() * 0.1);
+			
+			if (frictionForce.Length() > 2.5) {
+				frictionForce.Multiply(2.5 / frictionForce.Length());
+			}
+			
 		    this.body.ApplyImpulse(frictionForce, this.body.GetWorldCenter() );
 		},
 
