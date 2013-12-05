@@ -145,11 +145,13 @@
 	    dims            : {width:10, height:15},
 
 	    turnRight   : function() {
-			this.body.ApplyTorque(this.steeringStrength);
+	    	//if(this.status.isAccelerate)
+				this.body.ApplyTorque(this.steeringStrength);
 	    },
 
 	    turnLeft    : function() {
-		    this.body.ApplyTorque( - this.steeringStrength);
+		   // if(this.status.isAccelerate)
+		    	this.body.ApplyTorque( - this.steeringStrength);
 	    },
 
 	    getCurrentDirection         : function(optVec2) {
@@ -284,6 +286,7 @@
 		bumperCar       : null,
 		bumperOnUpdate  : null, // La fonction onUpdate de la BumperCar
 
+		// Numero de touche-clavier pour chaque action
 		keyMap          : {
 			accelerateKey   : 38,  // Accelerateur
 			brakingKey      : 40,  // Frein
@@ -324,8 +327,8 @@
 
 		onUpdate            : function() {
 			if (this.status.isAccelerate) this.bumperCar.accelerate();
-			if (this.status.isRightSteer) this.bumperCar.turnRight();
-			if (this.status.isLeftSteer) this.bumperCar.turnLeft();
+			if (this.status.isRightSteer && (this.status.isAccelerate || this.status.isBraking)) this.bumperCar.turnRight();
+			if (this.status.isLeftSteer && (this.status.isAccelerate || this.status.isBraking)) this.bumperCar.turnLeft();
 			if (this.status.isBraking) this.bumperCar.backing();
 		}
 	};
