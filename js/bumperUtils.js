@@ -50,6 +50,16 @@
             // Affecter la méthode de d'affichage du débug au monde 2dbox
             debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
             this.world.SetDebugDraw(debugDraw);
+
+			//--> écouteur de collision
+			var listener = new Box2D.Dynamics.b2ContactListener;
+			listener.BeginContact = function(contact) {
+				console.log(contact);
+				console.log(contact.GetFixtureA().GetBody().GetUserData()); // objet en collision 1
+				console.log(contact.GetFixtureB().GetBody().GetUserData()); // objet en collision 2
+			}
+			this.world.SetContactListener(listener);
+			// fin écouteur de collision -->
         },
 
 	    getViewSize     : function() {
@@ -128,7 +138,7 @@
 	        // Position dans le monde
 	        result.position.x   = 30;
 	        result.position.y   = 30;
-
+			
 	        // Paramètre physique
 	        result.type         = b2Body.b2_dynamicBody; // Objet mouvant
 	        result.density      = 10.0;  // Densité utilisé dans le calcul de la masse
@@ -137,6 +147,7 @@
 	        result.angularDamping= 3;  // Adherence des pneus (resistance au tete à queue)
 	        return result;
         })();
+		this.bodyDef.userData = this; // Récupéré lors d'une collision pour identifier le véhicule
     };
 
     BumperCar.prototype = {
