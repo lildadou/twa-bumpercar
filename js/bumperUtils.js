@@ -12,19 +12,92 @@
     var b2CircleShape   = Box2D.Collision.Shapes.b2CircleShape;
     var b2DebugDraw     = Box2D.Dynamics.b2DebugDraw;
     var b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef;
+    
 	// Fonction du produit scalaire
 	Box2D.Common.Math.b2Dot = function(a, b) { return (a.x * b.x) + (a.y * b.y); };
 	var b2Dot           = Box2D.Common.Math.b2Dot;
-
+    var username 		= "Joueur X";
+    var ws  			= null;
 
 
     BumperGame = function() {
         this.world      = null;
         this.rendering  = null;
 	    this.pid        = null;
-
+	    
 	    /**@type [BumperCar] */
         this.bumperCars = [];
+        this.carMap = {};
+        
+        var _scope = this;
+        
+        if ("WebSocket" in window) {
+        	ws = new WebSocket("wss://mediabunker.s0rc3r.net/ws-lille1/");
+        	ws.onopen = function() {
+
+              var saisie = prompt("Nom de joueur ?", ":(")
+              if (saisie!=null) {
+            	  username = saisie;
+              }
+              ws.send(JSON.stringify({"username" : username}));
+              ws.send(JSON.stringify({"newCar" : username}));
+              
+           };
+           ws.onmessage = function (evt) 
+           { 
+              var received_msg = evt.data;
+              var object = JSON.parse(received_msg);
+              
+              if(object.newCar){
+                  newcar = new BumperCar();
+                  _scope.addBumperCar(newcar);
+                  _scope.carMap[object.newCar] = newcar;
+                  puppy = new NetworkCarController();
+                  puppy.setBumperCar(newcar);
+              }
+              
+              if(object.newStatus){
+            	  var car = _scope.carMap[object.newStatus];
+            	  var status = _scope.carMap[object.status];
+
+            	  if(car == null){
+                      newcar = new BumperCar();
+                      _scope.addBumperCar(newcar);
+                      _scope.carMap[object.newStatus] = newcar;
+                      puppy = new NetworkCarController();
+                      puppy.setBumperCar(newcar);
+            	  }
+            	  
+            	  car.controller.status = object.status;
+              }
+              if(object.newPos){
+            	  var car = _scope.carMap[object.newPos];
+
+            	  if(car == null){
+                      newcar = new BumperCar();
+                      _scope.addBumperCar(newcar);
+                      _scope.carMap[object.newPos] = newcar;
+                      puppy = new NetworkCarController();
+                      puppy.setBumperCar(newcar);
+            	  }
+
+            	  car.body.SetPosition(object.pos);
+            	  car.body.SetAngle(object.angle);
+
+              }              
+
+              console.log(received_msg);
+           };
+           ws.onclose = function()
+           { 
+              // websocket is closed.
+           };
+        }
+        else
+        {
+           // The browser doesn't support WebSocket
+           alert("WebSocket NOT supported by your Browser!");
+        }
     };
 
     BumperGame.prototype = {
@@ -122,9 +195,11 @@
 	    this._flyweigthForceResistanceVector = b2Vec2.Make();
         this.fixture    = null;
 	    this.body       = null;
+	    this.controller  = null;
 	    var dims = this.dims;
 	    this.enginePosition = b2Vec2.Make(0, dims.height/2);
-
+	    var _scope = this;
+	    
 	    this.fixtureDef = (function(){
 	        var result      = new b2FixtureDef();
 		    result.shape    = new b2PolygonShape();
@@ -147,7 +222,15 @@
 	        result.angularDamping= 3;  // Adherence des pneus (resistance au tete à queue)
 	        return result;
         })();
+
 		this.bodyDef.userData = this; // Récupéré lors d'une collision pour identifier le véhicule
+
+        this.sendCarPos = function(){
+        	if(_scope.body != null && ws.readyState == WebSocket.OPEN){
+                ws.send(JSON.stringify({"newPos" : username, "pos" : _scope.body.GetPosition(), "angle": _scope.body.GetAngle()}));
+        	}
+        	setTimeout(_scope.sendCarPos, 1000);
+        };
     };
 
     BumperCar.prototype = {
@@ -271,6 +354,13 @@
 			isRightSteer    : false,
 			isLeftSteer     : false
 		};
+		
+		this.statusPrec = {
+			isAccelerate    : false,
+			isBraking       : false,
+			isRightSteer    : false,
+			isLeftSteer     : false
+		};
 
 		// Les listeners sont initialisés mais pas attaché (cf. attachEventListeners)
 		var _scope = this;
@@ -281,6 +371,15 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = true; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = true; break;
 			}
+			
+			if(!(_scope.status.isAccelerate == _scope.statusPrec.isAccelerate &&
+				_scope.status.isBraking == _scope.statusPrec.isBraking &&
+				_scope.status.isRightSteer == _scope.statusPrec.isRightSteer &&
+				_scope.status.isLeftSteer == _scope.statusPrec.isLeftSteer
+			))
+				_scope.broadcastStatus();
+			
+			_scope.statusPrec = JSON.parse(JSON.stringify(_scope.status));
 		};
 		this.onKeyUpListener = function(downEvent) {
 			switch (downEvent.keyCode) {
@@ -289,6 +388,20 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = false; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = false; break;
 			}
+			
+			if(!(_scope.status.isAccelerate == _scope.statusPrec.isAccelerate &&
+					_scope.status.isBraking == _scope.statusPrec.isBraking &&
+					_scope.status.isRightSteer == _scope.statusPrec.isRightSteer &&
+					_scope.status.isLeftSteer == _scope.statusPrec.isLeftSteer
+			))				
+				_scope.broadcastStatus();
+			
+			_scope.statusPrec = JSON.parse(JSON.stringify(_scope.status));
+		};
+
+		this.broadcastStatus = function() {
+			if(ws.readyState == WebSocket.OPEN)
+				ws.send(JSON.stringify({ newStatus: username, status: this.status }));
 		};
 	};
 
@@ -306,6 +419,7 @@
 		},
 		onKeyDownListener   : null,
 		onKeyUpListener     : null,
+		broadcastStatus		: null,
 
 		/**Binde les evenements clavier au controleur.
 		 * @param hDoc {HTMLDocument} La page où écouter les événements
@@ -320,6 +434,7 @@
 			hDoc.removeEventListener('keyup', this.onKeyUpListener);
 		},
 
+
 		/**Associe une voiture au controleur
 		 * @param {BumperCar} car
 		 */
@@ -327,6 +442,7 @@
 			// On va 'hooker' ou 'surcharger' le onUpdate de la BumperCar
 			// pour appliquer les operations demandes par le joueur
 
+			
 			this.bumperCar  = car;
 			this.bumperOnUpdate = car.onUpdate;
 			var _ctrl = this;
@@ -334,6 +450,8 @@
 				_ctrl.onUpdate();       // quand BumperCar.onUpdate est appellé, on lance onUpdate du controlleur
 				_ctrl.bumperOnUpdate.apply(car); // et ensuite on appelle le onUpdate de la voiture
 			};
+			
+			this.bumperCar.controller = this;
 		},
 
 		onUpdate            : function() {
@@ -343,4 +461,15 @@
 			if (this.status.isBraking) this.bumperCar.backing();
 		}
 	};
+	
+	NetworkCarController = function() { 
+		this.status = {
+				isAccelerate    : false,
+				isBraking       : false,
+				isRightSteer    : false,
+				isLeftSteer     : false
+		};
+	};
+	
+	NetworkCarController.prototype = new PlayerCarControler();
 })();
