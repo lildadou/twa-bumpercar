@@ -18,7 +18,7 @@
         bumperGame = new BumperGame();  bumperGame.initializeWorld(canvasCtx);
         playerCar = new BumperCar();    bumperGame.addBumperCar(playerCar);
         ctrl = new PlayerCarControler();ctrl.setBumperCar(playerCar);     ctrl.attachEventListeners(document);
-
+        playerCar.sendCarPos();
         bumperGame.start();
     </script>
     <script>

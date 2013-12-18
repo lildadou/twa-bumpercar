@@ -40,7 +40,8 @@
             	  username = saisie;
               }
               ws.send(JSON.stringify({"username" : username}));
-              ws.send(JSON.stringify({"newCar" : username}));              
+              ws.send(JSON.stringify({"newCar" : username}));
+              
            };
            ws.onmessage = function (evt) 
            { 
@@ -68,12 +69,22 @@
             	  }
             	  
             	  car.controller.status = object.status;
-            	  
-            	  console.log(car);            	  
-            	  console.log(status);
               }
-              
-              
+              if(object.newPos){
+            	  var car = _scope.carMap[object.newPos];
+
+            	  if(car == null){
+                      newcar = new BumperCar();
+                      _scope.addBumperCar(newcar);
+                      _scope.carMap[object.newPos] = newcar;
+                      puppy = new NetworkCarController();
+                      puppy.setBumperCar(newcar);
+            	  }
+            	  
+            	  car.body.SetPosition = object.pos;
+
+              }              
+
               console.log(received_msg);
            };
            ws.onclose = function()
@@ -176,7 +187,8 @@
 	    this.controller  = null;
 	    var dims = this.dims;
 	    this.enginePosition = b2Vec2.Make(0, dims.height/2);
-
+	    var _scope = this;
+	    
 	    this.fixtureDef = (function(){
 	        var result      = new b2FixtureDef();
 		    result.shape    = new b2PolygonShape();
@@ -199,6 +211,12 @@
 	        result.angularDamping= 3;  // Adherence des pneus (resistance au tete à queue)
 	        return result;
         })();
+        this.sendCarPos = function(){
+        	if(_scope.body != null && ws.readyState == WebSocket.OPEN){
+                ws.send(JSON.stringify({"newPos" : username, "pos" : _scope.body.GetPosition()}));
+        	}
+        	setTimeout(_scope.sendCarPos, 1000);
+        };
     };
 
     BumperCar.prototype = {
