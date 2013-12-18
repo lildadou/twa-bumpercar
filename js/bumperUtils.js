@@ -81,7 +81,7 @@
                       puppy.setBumperCar(newcar);
             	  }
             	  
-            	  car.body.SetPosition = object.pos;
+            	  car.body.SetPosition(object.pos);
 
               }              
 
