@@ -27,6 +27,8 @@
 	    
 	    /**@type [BumperCar] */
         this.bumperCars = [];
+        this.carMap = {};
+        
         var _scope = this;
         
         if ("WebSocket" in window) {
@@ -38,20 +40,29 @@
             	  username = saisie;
               }
               ws.send(JSON.stringify({"username" : username}));
-              ws.send(JSON.stringify({"newcar" : username}));              
+              ws.send(JSON.stringify({"newCar" : username}));              
            };
            ws.onmessage = function (evt) 
            { 
               var received_msg = evt.data;
               var object = JSON.parse(received_msg);
               
-              if(object.newcar){
-                  // Une voiture de test
+              if(object.newCar){
                   newcar = new BumperCar();
-                  _scope.addBumperCar(crashCar);
-                  puppy = new PlayerCarControler();
-                  puppy.setBumperCar(crashCar);
+                  _scope.addBumperCar(newcar);
+                  _scope.carMap[object.newCar] = newcar;
+                  puppy = new NetworkCarController();
+                  puppy.setBumperCar(newcar);
               }
+              
+              if(object.newStatus){
+            	  var car = _scope.carMap[object.newStatus];
+            	  var status = _scope.carMap[object.status];
+            	  
+            	  console.log(status);
+              }
+              
+              
               console.log(received_msg);
            };
            ws.onclose = function()
