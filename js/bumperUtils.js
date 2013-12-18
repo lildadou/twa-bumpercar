@@ -392,7 +392,7 @@
 		}
 	};
 	
-	NetworkCarControler = function() { 
+	NetworkCarController = function() { 
 		this.status = {
 				isAccelerate    : false,
 				isBraking       : false,
@@ -401,5 +401,5 @@
 		};
 	};
 	
-	NetworkCarControler.prototype = new PlayerCarControler();
+	NetworkCarController.prototype = new PlayerCarControler();
 })();
