@@ -327,6 +327,13 @@
 			isRightSteer    : false,
 			isLeftSteer     : false
 		};
+		
+		this.statusPrec = {
+			isAccelerate    : false,
+			isBraking       : false,
+			isRightSteer    : false,
+			isLeftSteer     : false
+		};
 
 		// Les listeners sont initialisés mais pas attaché (cf. attachEventListeners)
 		var _scope = this;
@@ -337,7 +344,15 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = true; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = true; break;
 			}
-			_scope.broadcastStatus();
+			
+			if(!(_scope.status.isAccelerate == _scope.statusPrec.isAccelerate &&
+				_scope.status.isBraking == _scope.statusPrec.isBraking &&
+				_scope.status.isRightSteer == _scope.statusPrec.isRightSteer &&
+				_scope.status.isLeftSteer == _scope.statusPrec.isLeftSteer
+			))
+				_scope.broadcastStatus();
+			
+			_scope.statusPrec = JSON.parse(JSON.stringify(_scope.status));
 		};
 		this.onKeyUpListener = function(downEvent) {
 			switch (downEvent.keyCode) {
@@ -346,7 +361,15 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = false; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = false; break;
 			}
-			_scope.broadcastStatus();
+			
+			if(!(_scope.status.isAccelerate == _scope.statusPrec.isAccelerate &&
+					_scope.status.isBraking == _scope.statusPrec.isBraking &&
+					_scope.status.isRightSteer == _scope.statusPrec.isRightSteer &&
+					_scope.status.isLeftSteer == _scope.statusPrec.isLeftSteer
+			))				
+				_scope.broadcastStatus();
+			
+			_scope.statusPrec = JSON.parse(JSON.stringify(_scope.status));
 		};
 
 		this.broadcastStatus = function() {
