@@ -5,6 +5,7 @@
 	<title>Game in Progress - Bumper Car</title>
 	<link rel="stylesheet" href="css/style.css" />
 	<!-- Import JS -->
+    <script src="http://code.createjs.com/easeljs-0.7.0.min.js"></script>
 	<script src="libs/Box2dWeb-2.1.a.3.js"></script>
 	<script src="libs/jquery-1.9.0.min.js"></script>
 	<script src="js/bumperUtils.js"></script>
@@ -16,9 +17,31 @@
         var canvas = document.getElementById("bumperCanvas");
         var canvasCtx = canvas.getContext('2d');
         bumperGame = new BumperGame();  bumperGame.initializeWorld(canvasCtx);
+
+        // Paramètrage voiture du joueur
         playerCar = new BumperCar();    bumperGame.addBumperCar(playerCar);
         ctrl = new PlayerCarControler();ctrl.setBumperCar(playerCar);     ctrl.attachEventListeners(document);
+
+        // Signalement pour multi-joueur
         playerCar.sendCarPos();
+
+        // Gestion du rendu graphique
+        var stage = new createjs.Stage("bumperCanvas");
+        var imageJoueur = new createjs.Bitmap("img/image.png");
+        scale = 0.05;
+        imageJoueur.scaleX = this.scale;
+        imageJoueur.scaleY = this.scale;
+        imageJoueur.regX = 300;
+        imageJoueur.regY = 600;
+        stage.addChild(imageJoueur);
+
+        createjs.Ticker.addEventListener("tick", function (event) {
+            imageJoueur.x = playerCar.body.GetPosition().x;
+            imageJoueur.y = playerCar.body.GetPosition().y;
+            imageJoueur.rotation = (180 * playerCar.body.GetAngle() / Math.PI) + 180 ;
+            stage.update();
+        });
+
 
         bumperGame.start();
     </script>
