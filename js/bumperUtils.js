@@ -12,19 +12,48 @@
     var b2CircleShape   = Box2D.Collision.Shapes.b2CircleShape;
     var b2DebugDraw     = Box2D.Dynamics.b2DebugDraw;
     var b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef;
+    
 	// Fonction du produit scalaire
 	Box2D.Common.Math.b2Dot = function(a, b) { return (a.x * b.x) + (a.y * b.y); };
 	var b2Dot           = Box2D.Common.Math.b2Dot;
-
+    var username 		= "Joueur X";
 
 
     BumperGame = function() {
         this.world      = null;
         this.rendering  = null;
 	    this.pid        = null;
-
+	    this.ws  		= null;
+	    var _this = this;
+	    
 	    /**@type [BumperCar] */
         this.bumperCars = [];
+        
+        if ("WebSocket" in window) {
+        	this.ws = new WebSocket("wss://mediabunker.s0rc3r.net/ws-lille1/");
+        	this.ws.onopen = function() {
+
+              var saisie = prompt("Nom de joueur ?", ":(")
+              if (saisie!=null) {
+            	  username = saisie;
+              }
+              _this.ws.send(JSON.stringify({"username" : username}));
+           };
+           this.ws.onmessage = function (evt) 
+           { 
+              var received_msg = evt.data;
+              console.log(received_msg);
+           };
+           this.ws.onclose = function()
+           { 
+              // websocket is closed.
+           };
+        }
+        else
+        {
+           // The browser doesn't support WebSocket
+           alert("WebSocket NOT supported by your Browser!");
+        }
     };
 
     BumperGame.prototype = {
