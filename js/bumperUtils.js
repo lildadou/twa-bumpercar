@@ -17,34 +17,44 @@
 	Box2D.Common.Math.b2Dot = function(a, b) { return (a.x * b.x) + (a.y * b.y); };
 	var b2Dot           = Box2D.Common.Math.b2Dot;
     var username 		= "Joueur X";
+    var ws  			= null;
 
 
     BumperGame = function() {
         this.world      = null;
         this.rendering  = null;
 	    this.pid        = null;
-	    this.ws  		= null;
-	    var _this = this;
 	    
 	    /**@type [BumperCar] */
         this.bumperCars = [];
+        var _scope = this;
         
         if ("WebSocket" in window) {
-        	this.ws = new WebSocket("wss://mediabunker.s0rc3r.net/ws-lille1/");
-        	this.ws.onopen = function() {
+        	ws = new WebSocket("wss://mediabunker.s0rc3r.net/ws-lille1/");
+        	ws.onopen = function() {
 
               var saisie = prompt("Nom de joueur ?", ":(")
               if (saisie!=null) {
             	  username = saisie;
               }
-              _this.ws.send(JSON.stringify({"username" : username}));
+              ws.send(JSON.stringify({"username" : username}));
+              ws.send(JSON.stringify({"newcar" : username}));              
            };
-           this.ws.onmessage = function (evt) 
+           ws.onmessage = function (evt) 
            { 
               var received_msg = evt.data;
+              var object = JSON.parse(received_msg);
+              
+              if(object.newcar){
+                  // Une voiture de test
+                  newcar = new BumperCar();
+                  _scope.addBumperCar(crashCar);
+                  puppy = new PlayerCarControler();
+                  puppy.setBumperCar(crashCar);
+              }
               console.log(received_msg);
            };
-           this.ws.onclose = function()
+           ws.onclose = function()
            { 
               // websocket is closed.
            };
@@ -286,7 +296,7 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = true; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = true; break;
 			}
-			broadcastStatus();
+			_scope.broadcastStatus();
 		};
 		this.onKeyUpListener = function(downEvent) {
 			switch (downEvent.keyCode) {
@@ -295,11 +305,11 @@
 				case _scope.keyMap.rightSteer:      _scope.status.isRightSteer  = false; break;
 				case _scope.keyMap.leftSteer:       _scope.status.isLeftSteer   = false; break;
 			}
-			broadcastStatus();
+			_scope.broadcastStatus();
 		};
 
 		this.broadcastStatus = function() {
-			ws.send(JSON.stringify({ username: username ,status: this.status));
+			ws.send(JSON.stringify({ username: username ,status: this.status}));
 		};
 	};
 
