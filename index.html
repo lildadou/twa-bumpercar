@@ -19,14 +19,6 @@
         playerCar = new BumperCar();    bumperGame.addBumperCar(playerCar);
         ctrl = new PlayerCarControler();ctrl.setBumperCar(playerCar);     ctrl.attachEventListeners(document);
 
-        // Une voiture de test
-        crashCar = new BumperCar();
-        bumperGame.addBumperCar(crashCar);
-        puppy = new PlayerCarControler();
-        puppy.setBumperCar(crashCar);
-        puppy.status.isAccelerate = true;
-        puppy.status.isLeftSteer = true;
-
         bumperGame.start();
     </script>
     <script>

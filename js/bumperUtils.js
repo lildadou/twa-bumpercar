@@ -309,7 +309,7 @@
 		};
 
 		this.broadcastStatus = function() {
-			ws.send(JSON.stringify({ username: username ,status: this.status}));
+			ws.send(JSON.stringify({ newStatus: username, status: this.status }));
 		};
 	};
 
@@ -364,4 +364,15 @@
 			if (this.status.isLeftSteer) this.bumperCar.turnLeft();
 		}
 	};
+	
+	NetworkCarControler = function() { 
+		this.status = {
+				isAccelerate    : false,
+				isBraking       : false,
+				isRightSteer    : false,
+				isLeftSteer     : false
+		};
+	};
+	
+	NetworkCarControler.prototype = new PlayerCarControler();
 })();
