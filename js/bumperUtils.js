@@ -58,7 +58,18 @@
               if(object.newStatus){
             	  var car = _scope.carMap[object.newStatus];
             	  var status = _scope.carMap[object.status];
+
+            	  if(car == null){
+                      newcar = new BumperCar();
+                      _scope.addBumperCar(newcar);
+                      _scope.carMap[object.newStatus] = newcar;
+                      puppy = new NetworkCarController();
+                      puppy.setBumperCar(newcar);
+            	  }
             	  
+            	  car.controller.status = object.status;
+            	  
+            	  console.log(car);            	  
             	  console.log(status);
               }
               
