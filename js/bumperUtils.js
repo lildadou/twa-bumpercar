@@ -80,8 +80,9 @@
                       puppy = new NetworkCarController();
                       puppy.setBumperCar(newcar);
             	  }
-            	  
+
             	  car.body.SetPosition(object.pos);
+            	  car.body.SetAngle(object.angle);
 
               }              
 
@@ -213,7 +214,7 @@
         })();
         this.sendCarPos = function(){
         	if(_scope.body != null && ws.readyState == WebSocket.OPEN){
-                ws.send(JSON.stringify({"newPos" : username, "pos" : _scope.body.GetPosition()}));
+                ws.send(JSON.stringify({"newPos" : username, "pos" : _scope.body.GetPosition(), "angle": _scope.body.GetAngle()}));
         	}
         	setTimeout(_scope.sendCarPos, 1000);
         };
