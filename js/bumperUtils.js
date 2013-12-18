@@ -173,7 +173,7 @@
 	    this._flyweigthForceResistanceVector = b2Vec2.Make();
         this.fixture    = null;
 	    this.body       = null;
-	    this.controler  = null;
+	    this.controller  = null;
 	    var dims = this.dims;
 	    this.enginePosition = b2Vec2.Make(0, dims.height/2);
 
@@ -382,7 +382,7 @@
 				_ctrl.bumperOnUpdate.apply(car); // et ensuite on appelle le onUpdate de la voiture
 			};
 			
-			this.bumperCar.controler = this;
+			this.bumperCar.controller = this;
 		},
 
 		onUpdate            : function() {
