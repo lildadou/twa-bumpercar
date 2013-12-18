@@ -162,6 +162,7 @@
 	    this._flyweigthForceResistanceVector = b2Vec2.Make();
         this.fixture    = null;
 	    this.body       = null;
+	    this.controler  = null;
 	    var dims = this.dims;
 	    this.enginePosition = b2Vec2.Make(0, dims.height/2);
 
@@ -320,7 +321,8 @@
 		};
 
 		this.broadcastStatus = function() {
-			ws.send(JSON.stringify({ newStatus: username, status: this.status }));
+			if(ws.readyState == WebSocket.OPEN)
+				ws.send(JSON.stringify({ newStatus: username, status: this.status }));
 		};
 	};
 
@@ -360,6 +362,7 @@
 			// On va 'hooker' ou 'surcharger' le onUpdate de la BumperCar
 			// pour appliquer les operations demandes par le joueur
 
+			
 			this.bumperCar  = car;
 			this.bumperOnUpdate = car.onUpdate;
 			var _ctrl = this;
@@ -367,6 +370,8 @@
 				_ctrl.onUpdate();       // quand BumperCar.onUpdate est appellé, on lance onUpdate du controlleur
 				_ctrl.bumperOnUpdate.apply(car); // et ensuite on appelle le onUpdate de la voiture
 			};
+			
+			this.bumperCar.controler = this;
 		},
 
 		onUpdate            : function() {
