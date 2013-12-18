@@ -50,6 +50,16 @@
             // Affecter la méthode de d'affichage du débug au monde 2dbox
             debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
             this.world.SetDebugDraw(debugDraw);
+
+			//--> écouteur de collision
+			var listener = new Box2D.Dynamics.b2ContactListener;
+			listener.BeginContact = function(contact) {
+				console.log(contact);
+				console.log(contact.GetFixtureA().GetBody().GetUserData()); // objet en collision 1
+				console.log(contact.GetFixtureB().GetBody().GetUserData()); // objet en collision 2
+			}
+			this.world.SetContactListener(listener);
+			// fin écouteur de collision -->
         },
 
 	    getViewSize     : function() {
@@ -128,28 +138,31 @@
 	        // Position dans le monde
 	        result.position.x   = 30;
 	        result.position.y   = 30;
-
+			
 	        // Paramètre physique
 	        result.type         = b2Body.b2_dynamicBody; // Objet mouvant
 	        result.density      = 10.0;  // Densité utilisé dans le calcul de la masse
 	        result.restitution  = 0.2;  // Force restituée lors d'une collision
-	        //result.linearDamping= 3;   // Puissance du frein moteur
+	        result.linearDamping= 3;   // Puissance du frein moteur
 	        result.angularDamping= 3;  // Adherence des pneus (resistance au tete à queue)
 	        return result;
         })();
+		this.bodyDef.userData = this; // Récupéré lors d'une collision pour identifier le véhicule
     };
 
     BumperCar.prototype = {
-	    engineStrength  : 50,
-	    steeringStrength: 15,
-	    dims            : {width:10, height:20},
+	    engineStrength  : 1500,
+	    steeringStrength: 150,
+	    dims            : {width:10, height:15},
 
 	    turnRight   : function() {
-			this.body.ApplyTorque(this.steeringStrength);
+	    	//if(this.status.isAccelerate)
+				this.body.ApplyTorque(this.steeringStrength);
 	    },
 
 	    turnLeft    : function() {
-		    this.body.ApplyTorque( - this.steeringStrength);
+		   // if(this.status.isAccelerate)
+		    	this.body.ApplyTorque( - this.steeringStrength);
 	    },
 
 	    getCurrentDirection         : function(optVec2) {
@@ -188,13 +201,24 @@
 		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
 	    },
 
-	    updateFriction                  : function() {
+	    backing  : function() {
+		    var currentForwardNormal = this.body.GetWorldVector( b2Vec2.Make(0,1) ); // Le vec de  ou va la voiture
+		    currentForwardNormal.Multiply(-this.engineStrength * 0.1); // Ajout de la force motrice
+		    this.body.ApplyForce(currentForwardNormal, this.body.GetWorldCenter() );
+	    },
+
+	    updateFriction : function() {
 		    /**Applique la force de friction latéral engendrée par les pneux. En
 		     * effet, d'avant en arriere les roues roullent sans resistance mais
 		     * sur le côté les pneux resistent via les frottements.
 		     */
 			var frictionForce = this.getLateralVelocity();
-		    frictionForce.Multiply( - this.body.GetMass());
+		    frictionForce.Multiply( - this.body.GetMass() * 0.1);
+			
+			if (frictionForce.Length() > 2.5) {
+				frictionForce.Multiply(2.5 / frictionForce.Length());
+			}
+			
 		    this.body.ApplyImpulse(frictionForce, this.body.GetWorldCenter() );
 		},
 
@@ -273,6 +297,7 @@
 		bumperCar       : null,
 		bumperOnUpdate  : null, // La fonction onUpdate de la BumperCar
 
+		// Numero de touche-clavier pour chaque action
 		keyMap          : {
 			accelerateKey   : 38,  // Accelerateur
 			brakingKey      : 40,  // Frein
@@ -313,8 +338,9 @@
 
 		onUpdate            : function() {
 			if (this.status.isAccelerate) this.bumperCar.accelerate();
-			if (this.status.isRightSteer) this.bumperCar.turnRight();
-			if (this.status.isLeftSteer) this.bumperCar.turnLeft();
+			if (this.status.isRightSteer && (this.status.isAccelerate || this.status.isBraking)) this.bumperCar.turnRight();
+			if (this.status.isLeftSteer && (this.status.isAccelerate || this.status.isBraking)) this.bumperCar.turnLeft();
+			if (this.status.isBraking) this.bumperCar.backing();
 		}
 	};
 })();
